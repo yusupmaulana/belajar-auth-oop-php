@@ -1,0 +1,160 @@
+================================================================================
+SISTEM LOGIN REGISTER OOP PHP
+================================================================================
+
+0. INTRO =======================================================================
+
+
+1. STRUKTUR TABLE ==============================================================
+Membuat database auth_oop dengan field (id int(11) primary key, username varchar(50), password varchar(255))
+
+
+2. STRUKTUR FOLDER DAN FILE ====================================================
+
+folder assets    => menampung assets yang digunakan (style.css, img, js, css)
+folder classes   => menampung semua class2 yg digunakan (Database.php, Input.php, dll)
+folder core      => utk init.php(tempat meload semua class)
+folder templates => utk menyimpan template.(header.php, footer.php)
+file change-password.php => utk mengganti password user.
+file login.php           => utk login.
+file register.php        => utk register.
+file profile.php         => utk redirect dari login atau register.
+
+3. BAGIAN STATIS (header.php footer.php style.css) =============================
+mengatur layout untuk header dan footer beserta reset css.
+
+4. KONEKSI KE DATABASE =========================================================
+koneksi dibuat dengan singleton pattern => ada metode getInstance() yang menguji apakah udah melakukan koneksi atau belum. kita nggak mau melakukan koneksi berkali-kali (this requires less memory).
+- membuat property sprt host, user, pass, db utk koneksi ke database.
+- panggil property tsb dengan metode __construct().
+
+supaya tiap memanggil class tidak melakukan koneksi berkali-kali (koneksi dalam construct) maka digunakanlah metode singleton pattern ini.
+
+5. FILE INIT.PHP ===============================================================
+- menggunakan session utk kebutuhan login
+- meload class-class yang dibutuhkan.
+- cek init ke file login.php
+
+
+6. MEMULAI REGISTRASI USER =====================================================
+- require init.php header.php dan footer.php
+- buat form register di proses di halaman yang sama.
+- membuat class Input utk menangani $_POST || $_GET
+
+7. MEMBUAT METODE INSERT =======================================================
+- buat object $user->register_user(array()); parameternya sendiri berupa associative array merupakan pasangan dari column dan value dari input user. (pada register.php)
+- lakukan password_hash utk enkripsi password nya.
+- buat object $user = new User(); di init.php karena kita akan butuh ini dimana aja.
+- membuat metode register_user di class User.php
+- dalam class user butuh koneksi ke database, maka buat variabel utk menampung koneksi ke database pada metode __construct().
+- buat metode register_user dan oper nilainya ke Database.php (class Database bertanggung jawab atas segala sesuatu yang berhubungan dengan database aplikasi).
+- buat metode insert pada Database.php yang merupakan nilai yang dioper dari metode register_user dari User.php
+- karena variabel yang dioper ke metode insert adalah dalam bentuk array, maka kita harus memisahkan key dan value nya dan jadiin pasangan column dan value utk input ke database.
+
+8. ESCAPE INPUT ================================================================
+- mencegah sql injection dengan membuat metode escape
+- membuat metode run_query
+
+9. MEMBUAT CLASS VALIDASI=======================================================
+yang dilakukan di register.php adalah:
+1. memanggil objek validasi
+2. metode check() di Validation.php
+3. lolos ujian.
+
+10. MENGATUR LETAK ERROR========================================================
+1. simpan metode error ke variabel $errors.
+2. inisialisasikan diawal bahwa $errors = array()
+3. uji jika $errors tidak kosong maka keluarkan error dari $errors.
+
+11.KELAS SESSION================================================================
+1. set session dan buat class pada Session.php
+2. buat metode set dan get untuk session.
+3. redirect ke halaman profile.php
+4. tampilkan data session di profile.php
+5. buat metode exists utk mengecek apakah user udah login atau belum.
+
+12. SISTEM LOGIN================================================================
+1. karena halaman login mirip dengan register. maka copy paste halaman register ke halaman login.
+2. utk validasi nya cukup required aja
+3. kalo lulus validasi panggil metode login_user(username, password)
+4. uji jika metode login berhasil maka set session dan header ke halaman profile.php
+5. buat metode login_user($username, $password) di User.php yang isinya memanggil metode get_info('users','username', $username)
+6. uji password_verify jika berhasil maka akan return true.
+7. buat metode get_info pada Datbase.php yg isinya query utk SELECT data.
+8. pada halaman User.php die utk melihat data yg telah di SELECT.
+
+13. MENGUJI NAMA DI DALAM DATABASE==============================================
+- sebelum menggunakan metode login_user() kita bisa cek dulu apakah username udah terdaftar atau belum.
+- buat metode cek_nama(username) pada User.php
+- isi metode cek_nama yaitu memanggil metode get_info() yg sebelumnya telah dibuat. cek apakah namanya ada atau enggak.
+- cek variabel $data dengan metode empty($data) return false else nya return true.
+
+14. MEMBUAT SISTEM LOGOUT=======================================================
+- proteksi halaman login.php dan register.php apakah session nya udah di set. kalo udah redirect ke halaman profile.
+- membuat menu dinamis dengan menguji session di file header.php
+- buat file logout.php yg isinya session_destroy()
+
+15. MENGUJI NAMA SEBELUM MENDAFTAR==============================================
+- gunakan metode cek_nama pada class User utk menguji nama sudah terdaftar atau belum.
+- kalo nama nggak kosong maka false / keluarkan nama sudah terdaftar.
+- kalo nama kosong maka true / lanjutkan proses daftar.
+
+16. PASSWORD VERIFY=============================================================
+- buat field baru utk konfirmasi ulangi password. di bagian register.php
+- pada validasi buat rule baru yaitu match => password . agar yakin bahwa password yg diinputkan benar.
+
+17. PESAN FLASH=================================================================
+membuat variabel session tapi hanya satu kali ditampilkan, berarti setelah diset harus langsung dihapus.
+- set session flash('profile', 'selamat! anda berhasil mendaftar')
+- membuat metode flash() pada Session.php
+- uji dulu apakah session $nama nya udah ada maka simpan session di variabel $session. kemudian hapus session $nama dengan metode delete. dan terakhir balikin nilai $session.
+- else nya jika belum ada maka di set.
+- buat metode delete.
+
+18. KELAS REDIRECT==============================================================
+- utk menyembunyikan kompleksitas dari penulisan header.
+- buat kelas redirect dengan metode statis to().
+- utk halaman logout, login, profile, register
+
+19. MULTI LEVEL USER============================================================
+- pada struktur table kita sekrang tambahkan 1 kolom dengan nama role tinyint(1) default as defined 0.
+- buat metode baru pada User.php is_admin($username) utk mengecek role user di database.
+- manfaatkan metode get_info() yang sebelumnya telah dibuat dan cek role nya apakah == 1 maka true, kalo enggak false.
+- pada halaman profile gunakan metode is_admin dengan parameter user yg sedang login (pake session) utk menguji apakah user tsb admin. jika ya tampilkan fungsi khusus admin.
+
+20. MENCEGAH CSRF ATTACK DENGAN TOKEN===========================================
+- orang tertentu bisa manfaatin link kita utk tujuan tertentu.
+- form yg akan diolah disini hanya yg benar2 setelah tombol submit di klik.
+- buat input baru type hidden. utk menampung token.
+- buat fungsi statis generate pada file Token.php yang mana isinya utk ngeset session dan bikin string random kemudian di return.
+- buat satu function lagi dengan nama check($token). utk memeriksa token yg digenerate dan disimpan tadi apakah sama kayak token pada saat form disubmit.
+
+21. MENGUJI USER LOGIN==========================================================
+- refactor fungsi exists dari kelas session dan buat function is_loggedIn di User.php
+
+
+22. HALAMAN PROFILE=============================================================
+- buat satu fungsi yg dapat mengambil data2 dari user di database.
+- fungsi get_data(session) akan menampilkan data2 dari user yg sedang login berdasarkan select data dari database fungsi get_info() (User.php).
+- jadi kalo mau ngambil data2 lain selain username, cukup ganti key nya berdasarkan field di database.
+
+23. CHANGE PASSWORD=============================================================
+- buat halaman change-password, ambil template nya dari halaman profile.
+- buat form utk change-password data diolah di halaman yang sama.
+- fungsi change password ini akan sama seperti register hanya saja berbeda query (update)
+
+24. MEMBUAT HALAMAN PROFIL DINAMIS==============================================
+- jika parameter get nama nya ngga di set, pake session sebagai parameter nya(utk user yg sedang login).
+- jika parameter nama nya di set maka ambil data dari database berdasarkan parameter get tersebut. jika tidak ada maka akan muncul notice user tidak terdaftar. dengan ini maka kita dapat melihat user yang lain.
+
+- dan jika ingin menyembunyikan change password dan fungsi khusus admin.
+- bungkus dengan if dengan parameter $user_data['username'] == Session::get('username')
+- atau apakah user yg dilihat sama dengan user yg sedang login. jika ya baru tampilkan fungsi change password. (jadi di halaman user lain tdk akan melihat fungsi change password)
+
+25. MEMBUAT HALAMAN ADMIN=======================================================
+- ganti teks fungsi khusus admin dengan link ke daftar member (admin.php)
+- buat file baru dengan nama admin.php
+- tambahkan fungsi is_admin() utk mengecek kalo user biasa masuk ke halaman admin maka redirect ke halaman profile nya sendiri.
+- buat metode baru dengan nama $user->get_users() utk menampilkan semua user.(dibagian User.php)
+- ubah sedikit struktur dari metode get_info() pada Database.php agar menjadi lebih fleksibel.
+- lakukan print_r(utk membuktikan query berjalan).
