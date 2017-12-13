@@ -1,2 +1,2 @@
 # belajar-auth-oop-php
-sistem login &amp; register
+catatan pribadi belajar di sekolahkoding.com
